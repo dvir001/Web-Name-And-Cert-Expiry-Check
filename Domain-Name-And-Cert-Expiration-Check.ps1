@@ -144,6 +144,8 @@ function Invoke-DomainCheck
 		#Write-Output "$domainSite, Name- $domainNameExpirationDateLeft($domainNameExpirationDate), Cert- $domainCertExpirationDateLeft($domainCertExpirationDate)"
 		
 		# Export result to HTML
+		Invoke-Module-Install -modules "PSWriteHTML" #, "PSExcel"
+		
 		$ExportResult = @{ 'Domain' = $domainSite; 'URL' = $url; 'Name Expiration Date' = $domainNameExpirationDate; 'Name Expiration Left' = $domainNameExpirationDateLeft; 'Cert Expiration Date' = $domainCertExpirationDate; 'Cert Expiration Left' = $domainCertExpirationDateLeft }
 		$ExportResults = New-Object PSObject -Property $ExportResult
 		$ExportResults | Select-Object 'Domain', 'URL', 'Name Expiration Date', 'Name Expiration Left', 'Cert Expiration Date', 'Cert Expiration Left'
@@ -158,7 +160,7 @@ function Invoke-Program-Install
 	$installSource = "https://download.sysinternals.com/files/WhoIs.zip"
 	$installZip = "WhoIs.zip"
 	
-	if ((Test-Path -Path "$workDir\$installZip") -ne "True") <# Lookup if the exe is there #>
+	if (!(Test-Path -Path "$workDir\$installZip")) <# Lookup if the exe is there #>
 	{
 		if (Get-Command 'Invoke-Webrequest') { Invoke-WebRequest $installSource -OutFile "$workDir\$installZip" | Wait-Job }
 		else
@@ -239,6 +241,5 @@ function Invoke-Module-Install
 	}
 }
 
-Invoke-Module-Install -modules "PSWriteHTML"#, "PSExcel"
 Invoke-Program-Install
 Invoke-DomainCheck
