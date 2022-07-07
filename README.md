@@ -8,3 +8,7 @@ Sample Email:
 Sample HTML:
 
 ![alt text](https://github.com/dvir001/Web-Name-And-Cert-Expiry-Check/blob/main/Pictures/Sample2.jpg?raw=true)
+
+XLSX Input file need to have this format (Domain, Cert)
+
+![alt text](https://github.com/dvir001/Web-Name-And-Cert-Expiry-Check/blob/main/Pictures/Sample3.jpg?raw=true)
