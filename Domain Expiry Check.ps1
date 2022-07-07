@@ -5,10 +5,10 @@
 	 Created on:   	04/07/2022 16:10
 	 Created by:   	Dvir F
 	 Organization: 	ITMS
-	 Filename:     	
+	 Filename:     	Domain Expiry Check.ps1
 	===========================================================================
 	.DESCRIPTION
-		A description of the file.
+		Script to get expiry info.
 #>
 
 # If not using a json file for SMTP please provide the config here:
@@ -395,6 +395,6 @@ function Install-CustomModule
 
 Invoke-Program-Install
 Install-CustomModule -modules "PSWriteHTML", "PSExcel"
-#Get-DomainExpiry
-#Get-CertExpiry
+Get-DomainExpiry
+Get-CertExpiry
 Send-CustomMailMessage
