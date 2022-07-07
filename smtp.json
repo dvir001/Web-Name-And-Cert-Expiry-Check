@@ -1,0 +1,10 @@
+{
+	"Server": "smtp.sendgrid.net",
+	"Port": "587",
+	"SSL": "true",
+	"Login_User": "apikey",
+	"Login_Pass": "PASS",
+	"From": "ExpiryReport@corp.com",
+	"To": "helpdesk+ExpiryReport@corp.com",
+	"Subject": "Expiry Report"
+}
