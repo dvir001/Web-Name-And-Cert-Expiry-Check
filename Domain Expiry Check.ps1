@@ -324,6 +324,8 @@ function Invoke-Program-Install
 	
 	Expand-Archive -Path "$env:windir\Temp\$installZip" -DestinationPath "$env:windir\Temp" -Force -ErrorAction SilentlyContinue
 	#if (Test-Path -Path "$env:windir\Temp\$installZip") { Remove-Item -Path "$env:windir\Temp\$installZip" -Force }
+	
+	Invoke-Process -FilePath "$env:windir\Temp\whois.exe" -ArgumentList "-accepteula" | Out-Null
 }
 
 function Invoke-Process
