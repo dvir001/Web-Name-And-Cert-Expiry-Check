@@ -5,6 +5,6 @@ Sample Email:
 
 ![alt text](https://github.com/dvir001/Web-Name-And-Cert-Expiry-Check/blob/main/Pictures/Sample1.jpg?raw=true)
 
-Samle HTML:
+Sample HTML:
 
 ![alt text](https://github.com/dvir001/Web-Name-And-Cert-Expiry-Check/blob/main/Pictures/Sample2.jpg?raw=true)
