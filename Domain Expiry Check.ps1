@@ -123,18 +123,18 @@ function Get-DomainExpiry
 				return $domainExpiryDate
 			}
 			
-			if ($item -like "*.com1")
+			if ($item -like "*.com") <# Mini filter to skip testing for "*.com" #>
 			{
 				$domainExpiryDate = Get-DomainExpiryDate -InfoPatterns "Registry Expiry Date:" -TimeFormatsPatterns "yyyy-MM-dd"
 			}
-			elseif ($item -like "*.co.il1")
+			elseif ($item -like "*.co.il") <# Mini filter to skip testing for "*.com" #>
 			{
 				$domainExpiryDate = Get-DomainExpiryDate -InfoPatterns "validity:" -TimeFormatsPatterns "dd-MM-yyyy"
 			}
-			else
+			else <# For everything else #>
 			{
-				[Array]$InfoPatterns = "Registry Expiry Date:", "Expiration Date:", "validity:", "Expiry date:"
-				[Array]$TimeFormatsPatterns = "$formatTime", "yyyy-MM-dd", "dd-MM-yyyy", "dd-MMM-yyyy"
+				[Array]$InfoPatterns = "Registry Expiry Date:", "Expiration Date:", "validity:", "Expiry date:" <# Every info pattern I found, I could be missing more #>
+				[Array]$TimeFormatsPatterns = "$formatTime", "yyyy-MM-dd", "dd-MM-yyyy", "dd-MMM-yyyy" <# Every time pattern I found, I could be missing more #>
 				$domainExpiryDate = Get-DomainExpiryDate -InfoPatterns $InfoPatterns -TimeFormatsPatterns $TimeFormatsPatterns
 			}
 		}
