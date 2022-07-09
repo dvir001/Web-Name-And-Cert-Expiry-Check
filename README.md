@@ -1,5 +1,11 @@
 # Web-Name-And-Cert-Expiry-Check
-Powershell Domain Name And Cert Expiration Check, a simple script to export days remain till certs and domain whois names expires
+A simple script to export days remaining till certs and domain (whois) names expire.
+
+This script will create 4 files, 
+2 data files for certs (EXEL+HTML)
+2 data files for domains (EXEL+HTML)
+
+And you can also add SMTP info to email the files.
 
 Sample Email:
 
