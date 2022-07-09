@@ -304,7 +304,6 @@ function Send-CustomMailMessage
 	foreach ($domainWarning in $domainWarningList)
 	{
 		$domainWarningOutput += @"
-
 `'$($domainWarning.Domain)`' - $($domainWarning.DomainExpiryLeft) Days left
 
 "@
@@ -315,21 +314,60 @@ function Send-CustomMailMessage
 	{
 		$certWarningNotHyper = $($certWarning.Cert).replace("://", " ")
 		$certWarningOutput += @"
-
 `'$certWarningNotHyper`' - $($certWarning.CertExpiryLeft) Days left
 
 "@
 	}
 	
+	function Get-ExternalIP
+	{
+		[Array]$ipList = "212.199.245.170", "31.154.2.206", "77.137.40.126", "31.154.32.114" <# Office IPS #>
+		$NetworkIP = "1.1.1.1" <# Ping Test server IP #>
+		
+		[Array]$ipTestSitesList = "http://ifconfig.me/ip", "http://icanhazip.com", "http://icanhazip.com", "http://ident.me", "http://smart-ip.net/myip"
+		$ipPattern = "^([1-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])(\.([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])){3}$"
+		$pingNetwork = Test-Connection -ComputerName $NetworkIP -Count 1 -Quiet -ErrorAction Ignore
+		
+		if ($pingNetwork)
+		{
+			foreach ($ipTestSites in $ipTestSitesList) <# Get external IP #>
+			{
+				$ipTest = (Invoke-WebRequest -uri "$ipTestSites" -UseBasicParsing).Content
+				
+				if ($ipTest -match $ipPattern)
+				{
+					Return $ipTest
+					break
+				}
+			}
+		}
+	}
+	
+	$externalIP = Get-ExternalIP
+	
 	$smtpBody = @"
-Domain certs with less then $warningDays days:
-$certWarningOutput
+<table border="1" cellpadding="1" cellspacing="1" style="width:1000px">
+	<tbody>
+		<tr>
+			<td style="text-align:center">Domain certs with less then $warningDays days</td>
+			<td style="text-align:center">Domain names with less then $warningDays days</td>
+		</tr>
+		<tr>
+			<td style="text-align:center">$certWarningOutput</td>
+			<td style="text-align:center">$domainWarningOutput</td>
+		</tr>
+	</tbody>
+</table>
 
-Domain names with less then $warningDays days:
-$domainWarningOutput
+<p>Script running from server: $env:COMPUTERNAME</p>
+
+<p>IP: $externalIP</p>
+
+<p>&nbsp;</p>
+
 "@
 	
-	Send-MailMessage -SmtpServer $smtpServer -Port $smtpPort -UseSsl:$smtpUseSSL -Credential $smtpCredential -From $smtpFrom -To $smtpTo -Subject $smtpSubject -Attachments $smtpAttachments -Body $smtpBody
+	Send-MailMessage -SmtpServer $smtpServer -Port $smtpPort -UseSsl:$smtpUseSSL -Credential $smtpCredential -From $smtpFrom -To $smtpTo -Subject $smtpSubject -Attachments $smtpAttachments -Body $smtpBody -BodyAsHtml
 }
 
 function Invoke-Program-Install
