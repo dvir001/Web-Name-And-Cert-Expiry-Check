@@ -86,101 +86,85 @@ function Get-DomainExpiry
 		{
 			$domainExpiryCommand = Invoke-Process -FilePath "$env:windir\Temp\whois.exe" -ArgumentList $item
 			
-			Clear-Variable -Name domainExpiryInfo -ErrorAction SilentlyContinue
-			Clear-Variable -Name domainExpiryDate -ErrorAction SilentlyContinue
-			Clear-Variable -Name updateTimeFormat -ErrorAction SilentlyContinue
-			
-			if ($item -like "*.com")
+			function Get-DomainExpiryDate <# Function to get the Exipry based on info pattern & time format in the whois registry #>
 			{
-				$infoPatterns = "Registry Expiry Date:"
+				[CmdletBinding()]
+				param (
+					[Parameter(Mandatory = $true)]
+					[Array]$InfoPatterns,
+					[Parameter(Mandatory = $true)]
+					[Array]$timeFormatsPatterns
+				)
+				Clear-Variable -Name domainExpiryInfo -ErrorAction SilentlyContinue
+				Clear-Variable -Name domainExpiryDate -ErrorAction SilentlyContinue
+				Clear-Variable -Name updateTimeFormat -ErrorAction SilentlyContinue
+				
 				foreach ($infoPattern in $infoPatterns)
 				{
 					$domainExpiryInfo = $domainExpiryCommand -split "`n" | Select-String -Pattern $infoPattern -AllMatches | Select-Object -Unique <# Try to find a pattern #>
 					if ($domainExpiryInfo -ne $null) { <#Write-Output "$infoPattern" ;#> break } <# Stop the loop when found a line with exipry info #>
 				}
 				
-				$domainExpiryDate = $domainExpiryInfo -replace "$infoPattern", "" -replace "`n", "" -replace " ", ""
-				$domainExpiryDate = $domainExpiryDate.split('T')[0]
+				$domainExpiryDate = $domainExpiryInfo -replace "$infoPattern", "" -replace "`n", "" -replace "`r", "" -replace " ", "" <# Clean the date #>
+				if ($domainExpiryDate -like "*T*") { $domainExpiryDate = $domainExpiryDate.split('T')[0] } <# Split time data if found (Remove hh:mm:ss) #>
 				#Write-Output "$item - `"$domainExpiryDate`""
-				$updateTimeFormat = [datetime]::ParseExact($domainExpiryDate, "yyyy-MM-dd", $null)
-				$domainExpiryDate = Get-Date $($updateTimeFormat) -Format $formatTime
-			}
-			elseif ($item -like "*.co.il")
-			{
-				$infoPatterns = "validity:"
-				foreach ($infoPattern in $infoPatterns)
+				foreach ($timeFormatsPattern in $timeFormatsPatterns) <# Try to match the date format from the list #>
 				{
-					$domainExpiryInfo = $domainExpiryCommand -split "`n" | Select-String -Pattern $infoPattern -AllMatches | Select-Object -Unique <# Try to find a pattern #>
-					if ($domainExpiryInfo -ne $null) { <#Write-Output "$infoPattern" ;#> break } <# Stop the loop when found a line with exipry info #>
+					#Write-Output "tryTimeFormat: $tryTimeFormat"
+					$error.clear() <# Clean errors before next test #>
+					try { $updateTimeFormat = [datetime]::ParseExact($domainExpiryDate, $timeFormatsPattern, $null) } <# Test the date format and try to match it #>
+					catch { } <# Error found, loop #>
+					if (!$error) { break } <# If there is no errors keep going #>
 				}
-				$domainExpiryDate = $domainExpiryInfo -replace "$infoPattern", "" -replace "`n", "" -replace "`r", "" -replace " ", ""
-				#Write-Output "$item - `"$domainExpiryDate`""
-				$updateTimeFormat = [datetime]::ParseExact($domainExpiryDate, "dd-MM-yyyy", $null)
-				$domainExpiryDate = Get-Date $($updateTimeFormat) -Format $formatTime
+				
+				try { $domainExpiryDate = Get-Date $($updateTimeFormat) -Format $formatTime } <# Fix the data format for the script output #>
+				catch { $domainExpiryDate = $todayTime } <# In case of a broken date, reset to today (0) #>
+				
+				return $domainExpiryDate
+			}
+			
+			if ($item -like "*.com1")
+			{
+				$domainExpiryDate = Get-DomainExpiryDate -InfoPatterns "Registry Expiry Date:" -TimeFormatsPatterns "yyyy-MM-dd"
+			}
+			elseif ($item -like "*.co.il1")
+			{
+				$domainExpiryDate = Get-DomainExpiryDate -InfoPatterns "validity:" -TimeFormatsPatterns "dd-MM-yyyy"
 			}
 			else
 			{
-				$infoPatterns = "Expiration Date:", "validity:", "Expiry date:", "Expiry"
-				foreach ($infoPattern in $infoPatterns)
-				{
-					$domainExpiryInfo = $domainExpiryCommand -split "`n" | Select-String -Pattern $infoPattern -AllMatches | Select-Object -Unique <# Try to find a pattern #>
-					$domainExpiryInfo = $domainExpiryInfo -replace "Registrar Registration Expiration Date:", "" -replace "validity:", "" -replace "Expiry date:", "" -replace "`n", "" -replace "`r", "" -replace " ", "" <# Remove text #>
-					if ($domainExpiryInfo -ne $null) { <#Write-Output "$infoPattern" ;#> break } <# Stop the loop when found a line with exipry info #>
-				} <# Clean the whois to get only the expiry date #>
-				
-				#Write-Output "$item domainExpiryInfo: $domainExpiryInfo"
-				if ($domainExpiryInfo -like "*T*")
-				{
-					$domainExpiryInfo = $domainExpiryInfo.split() -ne ""
-					$domainExpiryInfo = $domainExpiryInfo.split('T')[0]
-					$tryTimeFormats = $formatTime, "yyyy-MM-dd", "dd-MM-yyyy", "dd-MMM-yyyy"
-					foreach ($tryTimeFormat in $tryTimeFormats)
-					{
-						#Write-Output "tryTimeFormat: $tryTimeFormat"
-						$error.clear()
-						try { $date2 = [datetime]::ParseExact($domainExpiryInfo, $tryTimeFormat, $null) }
-						catch { }
-						if (!$error) { break }
-					}
-					#Write-Output "$item domainExpiryInfo: $domainExpiryInfo"
-					$domainExpiryDate = Get-Date $($date2) -Format $formatTime
-				} <# Remove hours and keep only date #>
-				else
-				{
-					#Write-Output "domainExpiryInfo: $domainExpiryInfo"
-					try { $domainExpiryDate = Get-Date $($domainExpiryInfo) -Format $formatTime }
-					catch { $domainExpiryDate = $todayTime }
-			<# In case there is no date found, reset to today #>
-				}
+				[Array]$InfoPatterns = "Registry Expiry Date:", "Expiration Date:", "validity:", "Expiry date:"
+				[Array]$TimeFormatsPatterns = "$formatTime", "yyyy-MM-dd", "dd-MM-yyyy", "dd-MMM-yyyy"
+				$domainExpiryDate = Get-DomainExpiryDate -InfoPatterns $InfoPatterns -TimeFormatsPatterns $TimeFormatsPatterns
 			}
-			
-			$domainExpiryLeft = New-Timespan -Start $todayTime -End $domainExpiryDate
-			$domainExpiryLeft = $domainExpiryLeft -replace ".00:00:00", "" -replace "00:00:00", "0" <# Remove hours and keep only date #>
-			
-			#Write-Output "domainExpiryInfo: $domainExpiryInfo"
-			
-			#Write-Output "$item, Name- $domainExpiryLeft($domainExpiryDate), Cert- $certExpiryLeft($certExpiryDate)"
-			
-			if ([int]$domainExpiryLeft -le [int]$warningDays) <# feed domain into the warning list if its under or equal to $warningDays #>
-			{
-				$warningArray = @(
-					@{
-						Domain		     = $item
-						DomainExpiryLeft = $domainExpiryLeft
-					} <# warning into json format #>
-				)
-				[Array]$domainWarningList += $warningArray <# feed all warnings into array for json file #>
-			}
-			
-			# Export results
-			$exportResult = @{ 'Domain' = $item; 'Expiry Date' = $domainExpiryDate; 'Expiry Left' = $domainExpiryLeft }
-			$exportResults = New-Object PSObject -Property $exportResult
-			$exportResults | Select-Object 'Domain', 'Expiry Date', 'Expiry Left' <# Show in output #>
-			$exportResults | Select-Object 'Domain', 'Expiry Date', 'Expiry Left' | Export-XLSX -Path "$outputFilesFolder\$domainFileXLSX" -Force -Append <# Export to XLSX #>
-			$resultArray += $exportResults | Select-Object 'Domain', 'Expiry Date', 'Expiry Left' <# Feed the data into array for the HTML file #>
-			
-			Start-Sleep -Seconds 10 # To not get blocked by whois for spam
 		}
+		
+		$domainExpiryLeft = New-Timespan -Start $todayTime -End $domainExpiryDate
+		$domainExpiryLeft = $domainExpiryLeft -replace ".00:00:00", "" -replace "00:00:00", "0" <# Remove hours and keep only date #>
+		
+		#Write-Output "domainExpiryInfo: $domainExpiryInfo"
+		
+		#Write-Output "$item - `"$domainExpiryLeft($domainExpiryDate)`""
+		
+		if ([int]$domainExpiryLeft -le [int]$warningDays) <# feed domain into the warning list if its under or equal to $warningDays #>
+		{
+			$warningArray = @(
+				@{
+					Domain		     = $item
+					DomainExpiryLeft = $domainExpiryLeft
+				} <# warning into json format #>
+			)
+			[Array]$domainWarningList += $warningArray <# feed all warnings into array for json file #>
+		}
+		
+		# Export results
+		$exportResult = @{ 'Domain' = $item; 'Expiry Date' = $domainExpiryDate; 'Expiry Left' = $domainExpiryLeft }
+		$exportResults = New-Object PSObject -Property $exportResult
+		$exportResults | Select-Object 'Domain', 'Expiry Date', 'Expiry Left' <# Show in output #>
+		$exportResults | Select-Object 'Domain', 'Expiry Date', 'Expiry Left' | Export-XLSX -Path "$outputFilesFolder\$domainFileXLSX" -Force -Append <# Export to XLSX #>
+		$resultArray += $exportResults | Select-Object 'Domain', 'Expiry Date', 'Expiry Left' <# Feed the data into array for the HTML file #>
+		
+		Start-Sleep -Seconds 10 # To not get blocked by whois for spam
 	}
 	
 	$domainWarningList | ConvertTo-Json | Out-File "$outputFilesFolder\$domainExpiryWarningJSON" -Force
