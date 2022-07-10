@@ -321,9 +321,7 @@ function Send-CustomMailMessage
 	
 	function Get-ExternalIP
 	{
-		[Array]$ipList = "212.199.245.170", "31.154.2.206", "77.137.40.126", "31.154.32.114" <# Office IPS #>
 		$NetworkIP = "1.1.1.1" <# Ping Test server IP #>
-		
 		[Array]$ipTestSitesList = "http://ifconfig.me/ip", "http://icanhazip.com", "http://icanhazip.com", "http://ident.me", "http://smart-ip.net/myip"
 		$ipPattern = "^([1-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])(\.([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])){3}$"
 		$pingNetwork = Test-Connection -ComputerName $NetworkIP -Count 1 -Quiet -ErrorAction Ignore
