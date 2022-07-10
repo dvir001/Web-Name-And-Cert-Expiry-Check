@@ -137,34 +137,34 @@ function Get-DomainExpiry
 				[Array]$TimeFormatsPatterns = "$formatTime", "yyyy-MM-dd", "dd-MM-yyyy", "dd-MMM-yyyy" <# Every time pattern I found, I could be missing more #>
 				$domainExpiryDate = Get-DomainExpiryDate -InfoPatterns $InfoPatterns -TimeFormatsPatterns $TimeFormatsPatterns
 			}
+			
+			$domainExpiryLeft = New-Timespan -Start $todayTime -End $domainExpiryDate
+			$domainExpiryLeft = $domainExpiryLeft -replace ".00:00:00", "" -replace "00:00:00", "0" <# Remove hours and keep only date #>
+			
+			#Write-Output "domainExpiryInfo: $domainExpiryInfo"
+			
+			#Write-Output "$item - `"$domainExpiryLeft($domainExpiryDate)`""
+			
+			if ([int]$domainExpiryLeft -le [int]$warningDays) <# feed domain into the warning list if its under or equal to $warningDays #>
+			{
+				$warningArray = @(
+					@{
+						Domain		     = $item
+						DomainExpiryLeft = $domainExpiryLeft
+					} <# warning into json format #>
+				)
+				[Array]$domainWarningList += $warningArray <# feed all warnings into array for json file #>
+			}
+			
+			# Export results
+			$exportResult = @{ 'Domain' = $item; 'Expiry Date' = $domainExpiryDate; 'Expiry Left' = $domainExpiryLeft }
+			$exportResults = New-Object PSObject -Property $exportResult
+			$exportResults | Select-Object 'Domain', 'Expiry Date', 'Expiry Left' <# Show in output #>
+			$exportResults | Select-Object 'Domain', 'Expiry Date', 'Expiry Left' | Export-XLSX -Path "$outputFilesFolder\$domainFileXLSX" -Force -Append <# Export to XLSX #>
+			$resultArray += $exportResults | Select-Object 'Domain', 'Expiry Date', 'Expiry Left' <# Feed the data into array for the HTML file #>
+			
+			Start-Sleep -Seconds 10 # To not get blocked by whois for spam
 		}
-		
-		$domainExpiryLeft = New-Timespan -Start $todayTime -End $domainExpiryDate
-		$domainExpiryLeft = $domainExpiryLeft -replace ".00:00:00", "" -replace "00:00:00", "0" <# Remove hours and keep only date #>
-		
-		#Write-Output "domainExpiryInfo: $domainExpiryInfo"
-		
-		#Write-Output "$item - `"$domainExpiryLeft($domainExpiryDate)`""
-		
-		if ([int]$domainExpiryLeft -le [int]$warningDays) <# feed domain into the warning list if its under or equal to $warningDays #>
-		{
-			$warningArray = @(
-				@{
-					Domain		     = $item
-					DomainExpiryLeft = $domainExpiryLeft
-				} <# warning into json format #>
-			)
-			[Array]$domainWarningList += $warningArray <# feed all warnings into array for json file #>
-		}
-		
-		# Export results
-		$exportResult = @{ 'Domain' = $item; 'Expiry Date' = $domainExpiryDate; 'Expiry Left' = $domainExpiryLeft }
-		$exportResults = New-Object PSObject -Property $exportResult
-		$exportResults | Select-Object 'Domain', 'Expiry Date', 'Expiry Left' <# Show in output #>
-		$exportResults | Select-Object 'Domain', 'Expiry Date', 'Expiry Left' | Export-XLSX -Path "$outputFilesFolder\$domainFileXLSX" -Force -Append <# Export to XLSX #>
-		$resultArray += $exportResults | Select-Object 'Domain', 'Expiry Date', 'Expiry Left' <# Feed the data into array for the HTML file #>
-		
-		Start-Sleep -Seconds 10 # To not get blocked by whois for spam
 	}
 	
 	$domainWarningList | ConvertTo-Json | Out-File "$outputFilesFolder\$domainExpiryWarningJSON" -Force
