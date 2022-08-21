@@ -304,8 +304,8 @@ function Send-CustomMailMessage
 	foreach ($domainWarning in $domainWarningList)
 	{
 		$domainWarningOutput += @"
-`'$($domainWarning.Domain)`' - $($domainWarning.DomainExpiryLeft) Days left
-
+`'$($domainWarning.Domain)`' - $($domainWarning.DomainExpiryLeft) Days left<br>
+<br>
 "@
 	}
 	
@@ -314,8 +314,8 @@ function Send-CustomMailMessage
 	{
 		$certWarningNotHyper = $($certWarning.Cert).replace("://", " ")
 		$certWarningOutput += @"
-`'$certWarningNotHyper`' - $($certWarning.CertExpiryLeft) Days left
-
+`'$certWarningNotHyper`' - $($certWarning.CertExpiryLeft) Days left<br>
+<br>
 "@
 	}
 	
