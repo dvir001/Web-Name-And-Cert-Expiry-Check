@@ -347,8 +347,8 @@ function Send-CustomMailMessage
 <table border="1" cellpadding="1" cellspacing="1" style="width:1000px">
 	<tbody>
 		<tr>
-			<td style="text-align:center">Domain certs with less then $warningDays days</td>
-			<td style="text-align:center">Domain names with less then $warningDays days</td>
+			<td style="text-align:center">Domain certs with less than $warningDays days</td>
+			<td style="text-align:center">Domain names with less than $warningDays days</td>
 		</tr>
 		<tr>
 			<td style="text-align:center">$certWarningOutput</td>
